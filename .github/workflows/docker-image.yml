@@ -1,0 +1,49 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+    
+      # Step 2: Log in to GHCR
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+    
+      # Step 3: Build the Docker image with two tags:
+      # - latest for consistent tracking
+      # - a tag with the current Git commit hash
+      - name: Build the Docker image
+        run: |
+          # Obtain shortened git commit hash
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          
+          # Build the Docker image with both the 'latest' tag and git commit hash tag
+          docker build . \
+            --file Dockerfile \
+            --tag ghcr.io/${{ github.repository }}/hono-oai-proxy:latest \
+            --tag ghcr.io/${{ github.repository }}/hono-oai-proxy:$SHORT_SHA
+      
+      # Step 4: Push both images (latest and commit hash) to the GitHub Container Registry
+      - name: Push Docker Images
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          
+          # Push both the 'latest' tag and specific git commit hash tag
+          docker push ghcr.io/${{ github.repository }}/hono-oai-proxy:latest
+          docker push ghcr.io/${{ github.repository }}/hono-oai-proxy:$SHORT_SHA
