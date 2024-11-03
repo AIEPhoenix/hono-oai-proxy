@@ -30,20 +30,26 @@ jobs:
       # - a tag with the current Git commit hash
       - name: Build the Docker image
         run: |
+          # Convert repo name to lowercase to ensure Docker constraints are met
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+
           # Obtain shortened git commit hash
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           
           # Build the Docker image with both the 'latest' tag and git commit hash tag
           docker build . \
             --file Dockerfile \
-            --tag ghcr.io/${{ github.repository }}/hono-oai-proxy:latest \
-            --tag ghcr.io/${{ github.repository }}/hono-oai-proxy:$SHORT_SHA
+            --tag ghcr.io/$REPO_NAME:latest \
+            --tag ghcr.io/$REPO_NAME:$SHORT_SHA
       
       # Step 4: Push both images (latest and commit hash) to the GitHub Container Registry
       - name: Push Docker Images
         run: |
+          # Convert repo name to lowercase
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           
           # Push both the 'latest' tag and specific git commit hash tag
-          docker push ghcr.io/${{ github.repository }}/hono-oai-proxy:latest
-          docker push ghcr.io/${{ github.repository }}/hono-oai-proxy:$SHORT_SHA
+          docker push ghcr.io/$REPO_NAME:latest
+          docker push ghcr.io/$REPO_NAME:$SHORT_SHA
